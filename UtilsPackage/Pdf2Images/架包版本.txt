@@ -1,0 +1,7 @@
+  <include name='flying-saucer-core-9.0.3.jar' />
+  <include name='flying-saucer-pdf-9.0.3.jar' />
+  <include name='fontbox-2.0.3.jar' />
+  <include name='freemarker-2.3.22.jar' />
+  <include name='itext-2.1.7.jar' />
+  <include name='iTextAsian.jar' />
+  <include name='iTextAsianCmaps.jar' />
