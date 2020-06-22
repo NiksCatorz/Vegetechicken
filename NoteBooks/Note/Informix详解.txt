@@ -1,0 +1,542 @@
+Informix SQL 语法详解
+ 分类： DB2/Informix2010-11-10 20:05:59
+1. CREATE DATABASE database_name [WITH LOG IN “pathname”]
+　　创建数据库。
+
+　　database_name：数据库名称。
+
+　　“pathname”：事务处理日志文件。
+
+　　创建一 database_name.dbs 目录，存取权限由 GRANT 设定，无日志文件就不能使用
+
+　　BEGIN WORK 等事务语句（可用 START DATABASE 语句来改变）。
+
+　　可选定当前数据库的日志文件。
+
+　　如：select dirpath form systables where tabtype = “L”;
+
+　　例：create databse customerdb with log in “/usr/john/log/customer.log”;
+
+　　DATABASE databse-name [EXCLUSIVE]
+
+　　选择数据库。
+
+　　database_name：数据库名称。
+
+　　EXCLUSIVE：独占状态。
+
+　　存取当前目录和 DBPATH 中指定的目录下的数据库，事务中处理过程中不要使用此语句。
+
+　　例：dtabase customerdb;
+
+　　3. CLOSE DATABASE
+
+　　关闭当前数据库。
+
+　　database_name：数据库名称。
+
+　　此语句之后，只有下列语句合法：
+
+　　CREATE DATABASE； DATABASE； DROP DATABSE； ROLLFORWARD DATABASE；
+
+　　删除数据库前必须使用此语句。
+
+　　例：close database;
+
+　　4. DROP DATABASE database_name
+
+　　删除指定数据库。
+
+　　database_name：数据库名称。
+
+　　用户是 DBA 或所有表的拥有者；删除所有文件，但不包括数据库目录；不允许删除当前数据库（须先关闭当前数据库）；事务中处理过程中不能使用此语句，通过 ROLLBACK WORK 也不可将数据库恢复。
+
+　　例：drop databse customerdb;
+
+　　5. CREATE [TEMP] TABLE table-name (column_name datatype [NOT NULL], …)
+
+　　[IN “pathname”]
+
+　　创建表或临时表。
+
+　　table-name ：表名称。
+
+　　column_name：字段名称。
+
+　　data-type：字段数据类型。
+
+　　path-name：指定表的存放位置
+
+　　TEMP 用于指定建立临时表；表名要唯一，字段要唯一；有 CONNECT 权限的用户可建立临时表；创建的表缺省允许 CONNECT 用户存取，但不可以 ALTER。
+
+　　例：create table user
+
+　　( c0 serial not null, c1 char (10),c2 char(2),c3 smallint, c4 decimal(6,3),c5 date ) in “usr/john/customer.dbs/user;
+
+　　6. ALTER TABLE
+
+　　ALTER TABLE table-name{ADD (newcol_name newcol_type [BEFORE oldcol_name], …) | DROP (oldcol_name, …)| MODIFY (oldcol_name newcol_type [NOT NULL], … )}, …
+
+　　修改表结构。
+
+　　table-name：表名称。
+
+　　newcol_name：新字段名称
+
+　　newcol_type：新字段类型
+
+　　oldcol_name：老字段名称
+
+　　可以使用单个或多个 ADD 子句、DROP 子句、MODIFY 子句，但某个字句失败，操作即中止；原字段是NULL，不允许 MODIFY为 NOT NULL，除非所有 NULL 字段中均非空，反之可以；ALTER 使用者是表的拥有者或拥有 DBA 权限，或被授权；事务中处理过程中不要使用此语句。
+
+　　例：alter table user
+
+　　add ( c6 char(20) before c5);
+
+　　7. RENAME TABLE oldname TO newname
+
+　　修改表名。
+
+　　oldname：原名称。
+
+　　newname：新名称。
+
+　　RENAME 使用者是表的拥有者或拥有 DBA 权限，或被授权；事务中处理过程中不要使用此语句。
+
+　　例：rename user to bbb;
+
+　　8. DROP TABLE table-name
+
+　　删除表。
+
+　　table-name：表名称。
+
+　　删除表意味着删除其中所有数据、各字段上的索引及对表的赋权、视图等；用户不能删除任何系统目录表；语句使用者是表拥有者或拥有DBA权限，事务中处理过程中不要使用此语句。
+
+　　9. RENAME COLUMN table.oldcolumn， TO newcolumn
+
+　　修改字段名。
+
+　　table.oldcolumn：表名及原字段名称
+
+　　newcolumn：新字段名称。
+
+　　语句使用者是表的拥有者或拥有 DBA 权限或有 ALTER 权限的用户，事务中处理过程中不要使用此语句。
+
+　　例：rename column user.c6 to c7;
+
+　　10. CREATE VIEW view-name column-list
+
+　　CREATE VIEW view-name column-list AS select_statement [WITH CHECK OPTION]
+
+　　创建视图。
+
+　　view-name：视图名称。
+
+　　column-list：字段列表。
+
+　　select_statement：SELECT语句。
+
+　　以下语句不使用视图：ALTER TABLE，DROP INDEX，ALTER INDEX， LOCK TABLE，CREATE INDEX， RENAME TABLE；视图将延用基表的字段名，对表达式等虚字段和多表间字段重名必须指明标识其字段名；若对视图中某些字段命名，则所有字段都必须命名；视图中数据类型延用基表中的数据类型，虚字段起诀于表达式；不能使用 ORDER BY 和 UNION 子句；对视图中所有的字段要有 SELECT 权限；事务中处理过程中使用此语句，即使事务回滚，视图也将建立，不能恢复。
+
+　　例：create view v_user as select * from user where c1 = “B1”;
+
+　　11. DROP VIEW view-name
+
+　　删除视图。
+
+　　view-name：视图名称。
+
+　　用户可删除自己建立的视图；视图的后代视图也被删除；事务中处理中不要使用此语句。
+
+　　例：drop view v_user;
+
+　　12. CREATE INDEX
+
+　　CREATE [UNIQUE/DISTINCT] [CLUSTER] INDEX index_name ON table_name([column_name ASC/DESC],…)
+
+　　创建索引。
+
+　　index_name：索引名称。
+
+　　table_name：表名称。
+
+　　column_name：字段名称。
+
+　　UNIQUE/DISTINCT：唯一索引。
+
+　　CLUSTER：使表的物理存放顺序按索引排列。
+
+　　ASC/DESC：升序或降序，缺省升序。
+
+　　语句执行时，将表的状态置为 EXCLUSIVE；复合索引最多包含 8 个字段，所有字段长度和不得大于 120 字节；事务中处理过程中使用此语句，即使事务回滚，索引将建立，不能恢复。
+
+　　例：create cluster index ix_user on user(c5);
+
+　　13. ALTER INDEX index-name TO [NOT] CLUSTER
+
+　　修改索引性质。
+
+　　index-name：索引名称。
+
+　　TO [NOT] CLUSTER：去掉或加上 CLUSTER 属性。
+
+　　语句执行时，将表的状态置为 EXCLUSIVE；事务中处理过程中使用此语句，即使事务回滚，索引性质将改变，不能恢复。
+
+　　例：alter index ix_user to not cluster;
+
+　　14. DROP INDEX index-name
+
+　　删除索引。
+
+　　index-name：索引名称。
+
+　　语句使用者是索引的拥有者或拥有 DBA 权限，事务中处理过程中不要使用此语句，否则事务无法恢复。
+
+　　例：drop index ix_user;
+
+　　15. CREATE SYNONYM synonym FOR table-name
+
+　　创建同义名。
+
+　　synonym：同义名
+
+　　table-name：表名称
+
+　　数据库的创建者可以使用同义名；没有赋予同义名权限的用户不能使用同义名；同义名不能和表名相同；事务中处理过程中不要使用此语句。
+
+　　例：create synonym user_alias for user;
+
+　　16. DROP SYNONYM synonym
+
+　　删除同义名。
+
+　　synonym：同义名
+
+　　可以删除自己建立的同义名；事务中处理过程中不要使用此语句，否则无法恢复。
+
+　　例：drop synonym user_alias;
+
+　　17. UPDATE STATISTICS [FOR TABLE table-name]
+
+　　更新数据库的统计数字。
+
+　　table-name：表名称
+
+　　此语句仅作用于当前数据库；可提高查询效率；只有执行此语句，才改变统计数据。
+
+　　例：update statistics for table user;
+
+ 
+
+ 
+
+GRANT {DBA|RESOURCE|CONNECT} TO {PUBLIC|user-list}
+
+　　授权命令。
+
+　　PUBLIC|user-list：全部或指定的用户。
+
+　　三种权限居且仅居其一，事务处理过程中不要执行 GRANT 语句。
+
+　　例：grant resource to pulbic;
+
+　　GRANT tab-privilege ON table-name TO {PUBLIC|user-list} [WITH GRANT OPTION]
+
+　　授表级权限。
+
+　　tab-privilege：表级权限。
+
+　　table-name：表名称。
+
+　　PUBLIC|user-list：全部或指定的用户。
+
+　　[WITH GRANT OPTION]：表示被授权用户有否权限进行二次授权。
+
+　　用户可以在自己建立表达式或被 [WITH GRANT OPTION] 准许的表中进行赋权；限定越多的权限优先级越高。
+
+　　例：grant update(c1,c6) on user to dick with grant option;
+
+　　附（INFORMIX的权限）
+
+　　(1) 数据库的权限（控制对数据库的访问以及数据库中表的创建和删除）
+
+　　DBA 权限：全部权利，修改系统表，建立和删除表与索引、增加和恢复表数据，以及授予其他用户数据库权限等；
+
+　　RESOURCE 权限：允许对数据库表中的数据进行存取，建立永久性表以及索引。
+
+　　CONNECT 权限：只允许对数据库表中的数据进行存取，建立和删除视图与临时表。
+
+　　(2)表级权限（对表的建立、修改、检索和更新等权限）
+
+　　ALTER：更改权限
+
+　　DELETE：删除权限
+
+　　INDEX：索引权限
+
+　　INSERT：插入权限
+
+　　SELECT [(cols)]：指定字段或所有字段上的查询权限，不指明字段缺省为所有字段。
+
+　　UPDATE [(cols)] ：指定字段或所有字段上的更新权限，不指明字段缺省为所有字段。
+
+　　ALL [PRIVILEGES]：以上所有表级权限
+
+　　19. REVOKE {DBA|RESOURCE|CONNECT} FROM {PUBLIC|user-list}
+
+　　收权命令。
+
+　　PUBLIC|user-list：全部或指定的用户。
+
+　　三种权限居且仅居其一，事务处理过程中不要执行 GRANT 语句。
+
+　　例：revoke resource from john;
+
+　　REVOKE tab-privilege ON table-name FROM {PUBLIC|user-list}
+
+　　收表级权限。
+
+　　tab-privilege：表级权限。
+
+　　table-name：表名称。
+
+　　PUBLIC|user-list：全部或指定的用户。
+
+　　[WITH GRANT OPTION]：表示被授权用户有否权限进行二次授权。
+
+　　用户只能取消由其本人赋予其他用户的表级存取权限；不能取消自己的权限，对 SELECT 和 UPDATE 作取消时，将取消所有表中字段的 SELECT 和 UPDATE 权限。
+
+　　例；revoke update on user from dick;
+
+　　LOCK TABLE table-name IN {SHARE|EXCLUSIVE} MODE
+
+　　记录级加锁和表级加锁或文件加锁。
+
+　　table-name：表名称。
+
+　　SHARE：允许读表中数据，但不允许作任何修改
+
+　　EXCLUSIVE：禁止其他任何形式访问表
+
+　　每次只能对表琐定一次；事务处理过程中，BEGIN WORK 后立即执行 LOCK TABLE 以取代记录级加锁，COMMIT WORK 和 ROLLBACK WORK 语句取消所有对表的加锁；若没有事务处理，锁将保持到用户退出或执行UNLOCK 为止。
+
+　　例：lock table user in exclusive mode;
+
+　　UNLOCK TABLE table-name
+
+　　取消记录级加锁和表级加锁或文件加锁。
+
+　　table-name：表名称。
+
+　　例：unlock user;
+
+　　SET LOCK MODE TO [NOT] WAIT
+
+　　改变锁定状态。
+
+　　TO [NOT]：等待解锁，有可能被死锁或不等待并提示错误信息，表示此记录被锁，缺省值。
+
+　　访问一个 EXCLUSIVE 状态下的记录，将返回一个错误。
+
+　　START DATABSE db_name [WITH LOG IN “pathname”]
+
+　　启动事务处理。
+
+　　“pathname”：事务处理日志文件。
+
+　　执行该语句前，需要先关闭当前数据库。
+
+　　例；clost database;
+
+　　start databse customer with log in “/usr/john/log/customer.log”;
+
+　　BEGIN WORK
+
+　　开始事务。例：begin work;
+
+　　COMMIT WORK
+
+　　提交（正常结束）事务。例：commit work;
+
+　　ROLLBACK WORK
+
+　　回滚（非正常结束）事务。例：rollback work;
+
+　　SELECT
+
+　　SELECT select_list FROM tab_name|view_name
+
+　　WHERE condition
+
+　　GROUP BY column_name
+
+　　HAVING condition
+
+　　ORDER BY column_list
+
+　　INTO TEMP table_name
+
+　　查询语句。
+
+　　select_list：选择表或 *
+
+　　tab_name：表名称
+
+　　view_name：视图名称。
+
+　　condition：查询条件，可使用 BETWEEN、IN、LIKE、IS NULL、LIKE、MATCHES、NOT、
+
+　　AND、OR、=、!=或<>、>、　>= 、<=、<、ALL、ANY、SOME
+
+　　column_name：分组字段名称
+
+　　condition：群聚条件
+
+　　column_list：排序字段列表，缺省 ASC，可指定 DSC；排序时，NULL 值小于非零值。
+
+　　table_name：临时表名称
+
+　　例：略
+
+　　附（常用函数）
+
+　　(1)集合函数：
+
+　　count(*)、
+
+　　sum(数据项/表达式)、avg(数据项/表达式)、max(数据项/表达式)、min(数据项/表达式)
+
+　　count(distinct 数据项/表达式)、sum(distinct 数据项/表达式)、avg(distinct 数据项/表达式)
+
+　　(2)代数函数和三角函数
+
+　　HEX(数据项/表达式)、ROUND(数据项/表达式)、TRUNC(数据项/表达式)、
+
+　　TAN(数据项/表达式)、ABS(数据项/表达式)、MOD(被除数,除数)
+
+　　(3)统计函数
+
+　　标准差，stdev()、方差，variance()、范围，rang()
+
+　　(4)时间函数
+
+　　DAY(日期/时间表达式)：返回数字型
+
+　　MONTH(日期/时间表达式)：返回整数
+
+　　WEEKDAY(日期/时间表达式)：06，0 星期天，1 星期一；返回整数
+
+　　YEAR(日期/时间表达式)、返回整数
+
+　　DATE(非日期表达式)：返回日期型
+
+　　EXTEND(日期/时间表达式,[第一个至最后一个])：返回指定的整数
+
+　　MDY(月,日,年)：返回日期型
+
+　　CURRENT：返回日期型
+
+　　(5)时间函数
+
+　　ROUND()，四舍五入。如：ROUND(10.95,position)position 进行四舍五入的前一位置
+
+　　TRUNC()，截取。如：TRUNC(10.95,0)position 截取的位置
+
+　　INFORMIX 临时表在下列情况下自动取消：
+
+　　A.退出数据库访问工具（如 DBACCESS）
+
+　　B.SQL 通话结束（DISCONNECT）
+
+　　C.发出取消表语句
+
+　　D.退出程序时
+
+　　INSERT
+
+　　INSERT INTO view_name|table_name [(column_list)] VALUES (value_list)
+
+　　或 INSERT INTO view_name|table_name [(column_list)] select_statement
+
+　　插入数据
+
+　　view_name|table_name：视图名或表名称
+
+　　column_list：数据项列表。
+
+　　value_list：值列表
+
+　　select_statement：查询语句。
+
+　　例：略
+
+　　DELETE FROM view_name|table_name WHERE search-conditions
+
+　　删除语句。
+
+　　view_name|table_name：视图名或表名称
+
+　　search-conditions；删除条件
+
+　　例：略
+
+　　UPDATE
+
+　　UPDATE view_name|table_name SET column_1 = value_1ist WHERE search_conditions
+
+　　或UPDATE view_name|table_name SET column_1|* = value_1ist WHERE search_conditions
+
+　　更新数据语句。
+
+　　view_name|table_name：表名称或视图表名称
+
+　　value_1ist：字段值
+
+　　search_conditions：更新数据的条件
+
+　　例：略
+
+　　CHECK TABLE table-name
+
+　　检查索引语句。
+
+　　语句使用者是表的拥有者或拥有DBA权限；不能对 systable 使用此语句。
+
+　　例：略
+
+　　REPAIR TABLE table-name
+
+　　修复索引。
+
+　　语句使用者是表的拥有者或拥有DBA权限；不能对 systable 使用此语句。
+
+　　例：略
+
+　　LOAD FROM “file-name” INSERT INTO table_name [(column_name[,…])]
+
+　　将文本数据栽入表中。
+
+　　例：load form “aa.txt” insert into user;
+
+　　UNLOAD TO “pathname”
+
+　　将表中数据卸为文本。
+
+　　例：unload to “aa.txt” select * from user;
+
+　　INFO
+
+　　系统信息查询。
+
+　　INFO TABLES：得到当前数据库上表的名字。
+
+　　INFO columns FOR table_name：指定表上的字段信息。
+
+　　INFO INDEXES FOR table_name：指定表上的索引信息。
+
+　　INFO [ACCESS|PRIVILEGES] FOR table_name：指定表上的存取权限。
+
+　　INFO STATUS FOR table_name：指定表的状态信息。
+
+　　例： info tables;
