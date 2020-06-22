@@ -52,7 +52,7 @@ mth_list = {"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "1
 # 校验位序列
 chkstr = "10X98765432"
 
-
+#check function
 def func_chk_id_file(cnt, _instr, filepath):
     # 计算权重枚举
     var_list = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
